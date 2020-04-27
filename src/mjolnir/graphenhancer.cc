@@ -683,7 +683,7 @@ bool IsIntersectionInternal(const GraphTile* start_tile,
                             std::mutex& lock,
                             const GraphId& startnode,
                             NodeInfo& startnodeinfo,
-                            DirectedEdge& directededge,
+                            const DirectedEdge& directededge,
                             const uint32_t idx) {
   // Internal intersection edges must be short and cannot be a roundabout.
   // Also they must be a road use (not footway, cycleway, etc.).
@@ -881,16 +881,18 @@ bool IsNextEdgeInternal(const DirectedEdge directededge,
                         std::mutex& lock,
                         bool infer_internal_intersections) {
   // Get the tile at the startnode
-  GraphTileBuilder tile = tilebuilder;
+  std::unique_ptr<GraphTileBuilder> external_tilebuilder;
   // Get the tile at the end node. and find inbound heading of the candidate
   // edge to the end node.
   bool b_diff_tile = false;
-  if (tile.id() != directededge.endnode().Tile_Base()) {
+  if (tilebuilder.id() != directededge.endnode().Tile_Base()) {
     lock.lock();
-    tile = GraphTileBuilder(reader.tile_dir(), directededge.endnode(), true, false);
+    external_tilebuilder =
+        std::make_unique<GraphTileBuilder>(reader.tile_dir(), directededge.endnode(), true, false);
     b_diff_tile = true;
     lock.unlock();
   }
+  GraphTileBuilder& tile = external_tilebuilder ? *external_tilebuilder : tilebuilder;
   NodeInfo& nodeinfo = tile.node_builder(directededge.endnode().id());
 
   // this tile may not have been updated yet; therefore, we must
@@ -905,7 +907,7 @@ bool IsNextEdgeInternal(const DirectedEdge directededge,
   }
   // Iterate through outbound edges to find the next edge
   for (uint32_t i = 0; i < nodeinfo.edge_count(); i++) {
-    DirectedEdge& diredge = tile.directededge_builder(nodeinfo.edge_index() + i);
+    const DirectedEdge& diredge = tile.directededge_builder(nodeinfo.edge_index() + i);
 
     // Skip opposing directed edge and any edge that is not a road. Skip any
     // edges that are not driveable outbound.

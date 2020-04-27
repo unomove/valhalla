@@ -13,6 +13,7 @@
 #include <string>
 #include <type_traits>
 #include <valhalla/baldr/graphconstants.h>
+#include <valhalla/baldr/graphmemory.h>
 #include <vector>
 #else
 #include <stdint.h>
@@ -120,9 +121,11 @@ static_assert(MAX_TRAFFIC_SPEED_KPH == valhalla::baldr::kMaxTrafficSpeed,
 } // namespace
 class Tile {
 public:
-  Tile(char* tile_ptr)
-      : header{reinterpret_cast<volatile TileHeader*>(tile_ptr)},
-        speeds{reinterpret_cast<volatile Speed*>(tile_ptr + sizeof(TileHeader))} {
+  Tile(std::unique_ptr<const GraphMemory> memory)
+      : memory_(std::move(memory)),
+        header(memory_ ? reinterpret_cast<volatile TileHeader*>(memory_->data) : nullptr),
+        speeds(memory_ ? reinterpret_cast<volatile Speed*>(memory_->data + sizeof(TileHeader))
+                       : nullptr) {
   }
 
   const volatile Speed& getTrafficForDirectedEdge(const uint32_t directed_edge_offset) const {
@@ -141,6 +144,10 @@ public:
     return header != nullptr;
   }
 
+private:
+  const std::unique_ptr<const GraphMemory> memory_;
+
+public:
   // These are all const pointers to data structures - once assigned,
   // the pointer values won't change.  The pointer targets are marked
   // as const volatile because they can be modified by code outside

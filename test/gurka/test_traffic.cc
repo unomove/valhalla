@@ -28,16 +28,45 @@ typedef struct {
   char _padding[255];
 } mtar_raw_header_t_;
 
+struct MMap {
+  MMap(const char* filename) {
+    fd = open(filename, O_RDWR);
+    struct stat s;
+    fstat(fd, &s);
+    data = mmap(0, s.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    length = s.st_size;
+  }
+
+  ~MMap() {
+    munmap(data, length);
+    close(fd);
+  }
+
+  int fd;
+  void* data;
+  size_t length;
+};
+
+class MMapGraphMemory final : public baldr::GraphMemory {
+public:
+  MMapGraphMemory(std::shared_ptr<MMap> mmap, char* data_, size_t size_) : mmap_(std::move(mmap)) {
+    data = data_;
+    size = size_;
+  }
+
+private:
+  const std::shared_ptr<MMap> mmap_;
+};
+
 /*************************************************************/
 // Helper function for updating the BD edge in the following test
 void update_bd_traffic_speed(valhalla::gurka::map& map, uint16_t new_speed) {
-  int fd = open(map.config.get<std::string>("mjolnir.traffic_extract").c_str(), O_RDWR);
-  struct stat s;
-  fstat(fd, &s);
+  const auto memory =
+      std::make_shared<MMap>(map.config.get<std::string>("mjolnir.traffic_extract").c_str());
 
   mtar_t tar;
   tar.pos = 0;
-  tar.stream = mmap(0, s.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  tar.stream = memory->data;
   tar.read = [](mtar_t* tar, void* data, unsigned size) -> int {
     memcpy(data, reinterpret_cast<char*>(tar->stream) + tar->pos, size);
     return MTAR_ESUCCESS;
@@ -54,8 +83,11 @@ void update_bd_traffic_speed(valhalla::gurka::map& map, uint16_t new_speed) {
   baldr::GraphReader reader(map.config.get_child("mjolnir"));
   mtar_header_t tar_header;
   while ((mtar_read_header(&tar, &tar_header)) != MTAR_ENULLRECORD) {
-    baldr::traffic::Tile tile(reinterpret_cast<char*>(tar.stream) + tar.pos +
-                              sizeof(mtar_raw_header_t_));
+    baldr::traffic::Tile tile(std::make_unique<MMapGraphMemory>(memory,
+                                                                reinterpret_cast<char*>(tar.stream) +
+                                                                    tar.pos +
+                                                                    sizeof(mtar_raw_header_t_),
+                                                                tar_header.size));
 
     baldr::GraphId tile_id(tile.header->tile_id);
     auto BD = gurka::findEdge(reader, map.nodes, "BD", "D", tile_id);
@@ -70,8 +102,6 @@ void update_bd_traffic_speed(valhalla::gurka::map& map, uint16_t new_speed) {
     }
     mtar_next(&tar);
   }
-  munmap(tar.stream, s.st_size);
-  close(fd);
 }
 
 TEST(Traffic, BasicUpdates) {

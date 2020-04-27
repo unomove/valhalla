@@ -15,13 +15,23 @@ TEST(Traffic, TileConstruction) {
   };
 #pragma pack(pop)
 
-  TestTile testdata = {};
+  // We need a holder struct for our fake TestTile object that owns it.
+  struct TestTileGraphMemory final : public GraphMemory {
+  public:
+    TestTileGraphMemory() {
+      data = reinterpret_cast<char*>(&testdata);
+      size = sizeof(TestTile);
+    }
 
-  testdata.header.directed_edge_count = 3;
-  testdata.speed3.speed_kmh = 99;
-  testdata.speed3.age_bucket = traffic::MAX_SPEED_AGE_BUCKET;
+    TestTile testdata = {};
+  };
 
-  traffic::Tile tile(reinterpret_cast<char*>(&testdata));
+  auto testtile = std::make_unique<TestTileGraphMemory>();
+  testtile->testdata.header.directed_edge_count = 3;
+  testtile->testdata.speed3.speed_kmh = 99;
+  testtile->testdata.speed3.age_bucket = traffic::MAX_SPEED_AGE_BUCKET;
+
+  traffic::Tile tile(std::move(testtile));
 
   auto const volatile& speed = tile.getTrafficForDirectedEdge(2);
   EXPECT_TRUE(speed.valid());

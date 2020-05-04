@@ -136,6 +136,16 @@ message TripLeg {
     optional string operator_url = 12;
   }
 
+  message BikeShareStationInfo {
+    optional string name = 1;
+    optional string ref = 2;
+    optional string capacity = 3;
+    optional string network = 4;
+    optional string operator = 5;
+    optional float rent_cost = 6;
+    optional float return_cost = 7;
+  }
+
   enum CycleLane {
     kNoCycleLane = 0;
     kShared = 1;    // Shared use lane (could be shared with pedestrians)
@@ -249,6 +259,7 @@ message TripLeg {
     optional TransitEgressInfo transit_egress_info = 9;
     optional string time_zone = 10;
     optional double transition_time = 11;    // seconds spent transitioning through this node
+    optional BikeShareStationInfo bss_info = 12;
   }
 
   message Admin {

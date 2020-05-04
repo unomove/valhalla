@@ -5,7 +5,7 @@ set_target_properties(gmock PROPERTIES FOLDER "Dependencies")
 set_target_properties(gmock_main PROPERTIES FOLDER "Dependencies")
 
 ## Lists tests
-set(tests aabb2 access_restriction actor admin attributes_controller complexrestriction countryaccess datetime directededge
+set(tests aabb2 access_restriction actor admin attributes_controller astar_bss complexrestriction countryaccess datetime directededge
   distanceapproximator double_bucket_queue edgecollapser edgestatus ellipse encode
   enhancedtrippath factory graphid graphtile graphtileheader gridded_data grid_range_query grid_traversal instructions
   json laneconnectivity linesegment2 location logging maneuversbuilder map_matcher_factory mapmatch
@@ -122,6 +122,16 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/test/data/roma_tiles/1/047/352.gph
 add_custom_target(roma_tiles DEPENDS ${CMAKE_BINARY_DIR}/test/data/roma_tiles/1/047/352.gph)
 set_target_properties(roma_tiles PROPERTIES FOLDER "Tests")
 
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/test/data/paris_bss_tiles/0/003/105.gph
+  COMMAND ${CMAKE_COMMAND} -E make_directory test/data/paris_bss_tiles/
+  COMMAND ${CMAKE_BINARY_DIR}/valhalla_build_tiles
+      --inline-config '{"mjolnir":{"tile_dir":"test/data/paris_bss_tiles","timezone":"test/data/paris_bss_tiles/tz.sqlite","hierarchy": true,"import_bike_share_stations": true,"shortcuts":true,"concurrency":4,"logging":{"type":""}}}'
+      ${VALHALLA_SOURCE_DIR}/test/data/paris_bss.osm.pbf
+  COMMENT "Building Paris BSS Tiles..."
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  DEPENDS valhalla_build_tiles ${VALHALLA_SOURCE_DIR}/test/data/paris_bss.osm.pbf)
+add_custom_target(paris_bss_tiles DEPENDS ${CMAKE_BINARY_DIR}/test/data/paris_bss_tiles/0/003/105.gph)
+
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/test/data/melborne_tiles/0/001/251.gph
   COMMAND ${CMAKE_COMMAND} -E make_directory test/data/melborne_tiles/
   COMMAND ${CMAKE_BINARY_DIR}/valhalla_build_tiles
@@ -209,7 +219,6 @@ foreach(test ${tests} ${cost_tests})
     DEPENDS ${test}
     VERBATIM)
   add_custom_target(run-${test} DEPENDS ${test}.log)
-  set_target_properties(run-${test} PROPERTIES FOLDER "Tests")
 endforeach()
 
 ## Run test dependencies
@@ -234,6 +243,7 @@ if(ENABLE_DATA_TOOLS)
   add_dependencies(run-thor_worker utrecht_tiles)
   add_dependencies(run-recover_shortcut utrecht_tiles)
   add_dependencies(run-minbb utrecht_tiles)
+  add_dependencies(run-astar_bss paris_bss_tiles)
   add_dependencies(run-astar utrecht_tiles whitelion_tiles roma_tiles reversed_whitelion_tiles bayfront_singapore_tiles ny_ar_tiles pa_ar_tiles nh_ar_tiles melborne_tiles)
   if(ENABLE_HTTP)
     add_dependencies(run-http_tiles utrecht_tiles)

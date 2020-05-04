@@ -298,6 +298,9 @@ public:
   const std::vector<DirectionsLeg_GuidanceView>& guidance_views() const;
   std::vector<DirectionsLeg_GuidanceView>* mutable_guidance_views();
 
+  DirectionsLeg_Maneuver_BssManeuverType bss_maneuver_type() const;
+  void set_bss_maneuver_type(DirectionsLeg_Maneuver_BssManeuverType);
+
 #ifdef LOGGING_LEVEL_TRACE
   std::string ToString() const;
 
@@ -382,6 +385,8 @@ protected:
   TripLeg_PedestrianType pedestrian_type_;
   TripLeg_BicycleType bicycle_type_;
   TripLeg_TransitType transit_type_;
+
+  DirectionsLeg_Maneuver_BssManeuverType bss_maneuver_type_;
 
   std::unique_ptr<VerbalTextFormatter> verbal_formatter_;
 

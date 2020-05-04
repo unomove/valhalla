@@ -448,6 +448,8 @@ void NarrativeBuilder::Build(const Options& options, std::list<Maneuver>& maneuv
         break;
       }
     }
+    maneuver.set_instruction(FormBssManeuverType(maneuver.bss_maneuver_type()) +
+                             maneuver.instruction());
 
     // Update previous maneuver
     prev_maneuver = &maneuver;
@@ -3871,6 +3873,19 @@ bool NarrativeBuilder::IsVerbalMultiCuePossible(Maneuver* maneuver, Maneuver& ne
     return true;
   }
   return false;
+}
+
+std::string NarrativeBuilder::FormBssManeuverType(DirectionsLeg_Maneuver_BssManeuverType type) {
+  switch (type) {
+    case DirectionsLeg_Maneuver_BssManeuverType_kRentBikeAtBikeShare: {
+      return "Then rent a bike at BSS. ";
+    }
+    case DirectionsLeg_Maneuver_BssManeuverType_kReturnBikeAtBikeShare: {
+      return "Then return the bike to BSS. ";
+    }
+    default:
+      return "";
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

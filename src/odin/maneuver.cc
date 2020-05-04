@@ -114,7 +114,8 @@ Maneuver::Maneuver()
       tee_(false), unnamed_walkway_(false), unnamed_cycleway_(false),
       unnamed_mountain_bike_trail_(false), imminent_verbal_multi_cue_(false),
       distant_verbal_multi_cue_(false), to_stay_on_(false), drive_on_right_(true),
-      has_time_restrictions_(false) {
+      has_time_restrictions_(false),
+      bss_maneuver_type_(DirectionsLeg_Maneuver_BssManeuverType_kNoneAction) {
   street_names_ = std::make_unique<StreetNames>();
   begin_street_names_ = std::make_unique<StreetNames>();
   cross_street_names_ = std::make_unique<StreetNames>();
@@ -879,6 +880,14 @@ const std::vector<DirectionsLeg_GuidanceView>& Maneuver::guidance_views() const 
 
 std::vector<DirectionsLeg_GuidanceView>* Maneuver::mutable_guidance_views() {
   return &guidance_views_;
+}
+
+DirectionsLeg_Maneuver_BssManeuverType Maneuver::bss_maneuver_type() const {
+  return bss_maneuver_type_;
+}
+
+void Maneuver::set_bss_maneuver_type(DirectionsLeg_Maneuver_BssManeuverType type) {
+  bss_maneuver_type_ = type;
 }
 
 #ifdef LOGGING_LEVEL_TRACE

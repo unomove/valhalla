@@ -121,6 +121,14 @@ static_assert(MAX_TRAFFIC_SPEED_KPH == valhalla::baldr::kMaxTrafficSpeed,
 } // namespace
 class Tile {
 public:
+  // Disallow copying
+  Tile(const Tile&) = delete;
+  Tile& operator=(const Tile&) = delete;
+
+  // Allow moving
+  Tile(Tile&&) = default;
+  Tile& operator=(Tile&&) = default;
+
   Tile(std::unique_ptr<const GraphMemory> memory)
       : memory_(std::move(memory)),
         header(memory_ ? reinterpret_cast<volatile TileHeader*>(memory_->data) : nullptr),
@@ -145,7 +153,7 @@ public:
   }
 
 private:
-  const std::unique_ptr<const GraphMemory> memory_;
+  std::unique_ptr<const GraphMemory> memory_;
 
 public:
   // These are all const pointers to data structures - once assigned,

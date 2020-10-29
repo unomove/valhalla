@@ -185,6 +185,7 @@
    * ADDED: Linear reference support to locate api [#2645](https://github.com/valhalla/valhalla/pull/2645)
    * ADDED: Implemented OSRM-like turn duration calculation for car. Uses it now in auto costing. [#2651](https://github.com/valhalla/valhalla/pull/2651)
    * ADDED: Enhanced turn lane information in guidance [#2653](https://github.com/valhalla/valhalla/pull/2653)
+   * ADDED: Regular speed on shortcut edges is calculated with turn durations taken into account. Truck, motorcycle and motorscooter profiles use OSRM-like turn duration. [#2662](https://github.com/valhalla/valhalla/pull/2662)
 
 ## Release Date: 2019-11-21 Valhalla 3.0.9
 * **Bug Fix**
